@@ -6,12 +6,11 @@ use macroquad::{
     prelude::*,
 };
 
-const SCREEN_SIZE: f32 = 640f32;
-const SQUARE_SIZE: f32 = SCREEN_SIZE / 8f32;
+const SQUARE_SIZE: f32 = 100f32;
 #[macroquad::main("Chess")]
 async fn main() {
     let board = Board::default();
-    set_window_size(SCREEN_SIZE as u32, SCREEN_SIZE as u32);
+    set_window_size((SQUARE_SIZE * 9.) as u32, (SQUARE_SIZE * 9.) as u32);
     let pieces = PiecesAtlas::parse_atlas("res/pieces_atlas.png")
         .await
         .unwrap();
@@ -23,7 +22,7 @@ async fn main() {
         clear_background(BLACK);
         render_grid();
         pieces.render_board(&board);
-        draw_rectangle_lines(0., 0., SCREEN_SIZE, SCREEN_SIZE, 1., WHITE);
+        draw_rectangle_lines(0., 0., SQUARE_SIZE * 9., SQUARE_SIZE * 9., 1., WHITE);
         next_frame().await
     }
 }
@@ -102,6 +101,26 @@ impl PiecesAtlas {
                     }
                 }
             }
+        }
+        // Render alph legends
+        for (i, char) in "ABCDEFGH".char_indices() {
+            draw_text(
+                format!("{char}").as_str(),
+                i as f32 * SQUARE_SIZE,
+                SQUARE_SIZE * 9.,
+                SQUARE_SIZE * 2.,
+                LIGHTGRAY,
+            );
+        }
+        // Render num legends
+        for (i, char) in "01234567".char_indices() {
+            draw_text(
+                format!("{char}").as_str(),
+                SQUARE_SIZE * 8.,
+                (i + 1) as f32 * SQUARE_SIZE,
+                SQUARE_SIZE * 2.,
+                LIGHTGRAY,
+            );
         }
     }
 }
