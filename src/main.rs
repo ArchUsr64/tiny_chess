@@ -1,7 +1,7 @@
 #![feature(let_chains)]
 use std::{array, cmp::Ordering};
 
-use chess::{Board, ChessMove, Color, MoveGen, Piece, Square};
+use chess::{Board, ChessMove, Color, MoveGen, Piece, Rank, Square};
 use macroquad::{
     color,
     miniquad::window::{quit, set_window_size},
@@ -45,7 +45,8 @@ async fn main() {
                     .filter(|i| i.get_source() == square)
                     .map(|i| i.get_dest())
                     .for_each(|i| draw_square(i, color::Color { a: 0.5, ..YELLOW }));
-                draw_square(square, DARKGRAY);
+                draw_square(square, WHITE);
+                draw_square(square, color::Color { a: 0.5, ..GREEN });
                 draw_texture_ex(
                     pieces.get_chess_piece(piece, Color::White),
                     mouse_position().0 - SQUARE_SIZE / 2f32,
@@ -63,7 +64,17 @@ async fn main() {
             if let Some(source) = selected_square
                 && let Some(dest) = square_from_mouse(mouse_position())
             {
-                let chess_move = ChessMove::new(source, dest, None);
+                let chess_move = ChessMove::new(
+                    source,
+                    dest,
+                    if source.get_rank() == Rank::Seventh
+                        && board.piece_on(source) == Some(Piece::Pawn)
+                    {
+                        Some(Piece::Queen)
+                    } else {
+                        None
+                    },
+                );
                 if board.legal(chess_move) {
                     board = board.make_move_new(chess_move);
                     if let Some(engine_move) = engine::next_move(&board) {
@@ -174,7 +185,7 @@ impl PiecesAtlas {
             );
         }
         // Render ranks
-        for (i, char) in "01234567".char_indices() {
+        for (i, char) in "12345678".char_indices() {
             draw_text(
                 format!("{char}").as_str(),
                 SQUARE_SIZE * 8.,
