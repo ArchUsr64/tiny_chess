@@ -5,31 +5,50 @@ use chess::{Board, ChessMove, Color, MoveGen, Piece, Square};
 const ENGINE_PLAYER: Color = Color::Black;
 
 pub fn next_move(board: &Board) -> Option<ChessMove> {
-    mini_max(board, 4, ENGINE_PLAYER)
+    mini_max(board, 6, isize::MIN, isize::MAX, ENGINE_PLAYER).0
 }
 
-pub fn mini_max(board: &Board, depth: usize, player: Color) -> Option<ChessMove> {
-    let movegen = MoveGen::new_legal(&board);
-    let scores = movegen.map(|mov| {
-        let score = if depth == 0 {
-            evaluate(&board.make_move_new(mov))
-        } else {
-            mini_max(&board.make_move_new(mov), depth - 1, !player)
-                .map(|best_move| evaluate(&board.make_move_new(best_move)))
-                .unwrap_or(if player == ENGINE_PLAYER {
-                    isize::MAX
-                } else {
-                    isize::MIN
-                })
-        };
-        (score, mov)
-    });
-    if player == ENGINE_PLAYER {
-        scores.max_by_key(|(score, _mov)| *score)
-    } else {
-        scores.min_by_key(|(score, _mov)| *score)
+pub fn mini_max(
+    board: &Board,
+    depth: usize,
+    alpha: isize,
+    beta: isize,
+    player: Color,
+) -> (Option<ChessMove>, isize) {
+    let (mut alpha, mut beta) = (alpha, beta);
+    if depth == 0 {
+        return (None, evaluate(board));
     }
-    .map(|(_, mov)| mov)
+    let movegen = MoveGen::new_legal(board);
+    if player == ENGINE_PLAYER {
+        let (mut best_move, mut best_score) = (None, isize::MIN);
+        for mov in movegen {
+            let (_, score) = mini_max(&board.make_move_new(mov), depth - 1, alpha, beta, !player);
+            if score >= best_score {
+                best_move = Some(mov);
+            }
+            best_score = best_score.max(score);
+            alpha = alpha.max(best_score);
+            if beta <= alpha {
+                break;
+            }
+        }
+        (best_move, best_score)
+    } else {
+        let (mut best_move, mut best_score) = (None, isize::MAX);
+        for mov in movegen {
+            let (_, score) = mini_max(&board.make_move_new(mov), depth - 1, alpha, beta, !player);
+            if score <= best_score {
+                best_move = Some(mov);
+            }
+            best_score = best_score.min(score);
+            beta = beta.min(best_score);
+            if beta <= alpha {
+                break;
+            }
+        }
+        (best_move, best_score)
+    }
 }
 
 const fn piece_weight(piece: Piece) -> isize {
