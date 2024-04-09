@@ -64,7 +64,7 @@ async fn main() {
             if let Some(source) = selected_square
                 && let Some(dest) = square_from_mouse(mouse_position())
             {
-                let chess_move = ChessMove::new(
+                let player_move = ChessMove::new(
                     source,
                     dest,
                     if source.get_rank() == Rank::Seventh
@@ -75,10 +75,15 @@ async fn main() {
                         None
                     },
                 );
-                if board.legal(chess_move) {
-                    board = board.make_move_new(chess_move);
+                if board.legal(player_move) {
+                    println!("Board: {}", board.to_string(),);
+                    println!("Player Move: {}", player_move.to_string());
+                    board = board.make_move_new(player_move);
                     if let Some(engine_move) = engine::next_move(&board) {
                         board = board.make_move_new(engine_move);
+                        println!("Engine Move: {}", engine_move.to_string());
+                    } else {
+                        println!("{:?}", board.status());
                     }
                 }
             }
